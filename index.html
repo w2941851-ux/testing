@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语启蒙需求调研</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Updated to Duolingo style with flat design and green primary color */
+        :root {
+            --duo-green: #58CC02;
+            --duo-green-dark: #46A302;
+            --duo-white: #FFFFFF;
+            --duo-gray: #E5E5E5;
+            --duo-blue: #1CB0F6;
+            --duo-text: #3C3C3C;
+            --duo-border: #E5E5E5;
+        }
+
+        /* Import clean sans-serif fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: #FAFAFA;
+            margin: 0;
+            padding: 0;
+            color: var(--duo-text);
+        }
+
+        /* Duolingo-style 3D button with solid shadow */
+        .duo-button {
+            border: none;
+            border-bottom: 4px solid var(--duo-green-dark);
+            border-radius: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.1s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .duo-button:active {
+            transform: translateY(3px);
+            border-bottom-width: 1px;
+        }
+
+        .duo-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #E5E5E5 !important;
+            border-bottom-color: #ADADAD !important;
+        }
+
+        .duo-button-secondary {
+            border-bottom: 4px solid #0A8FD4;
+        }
+
+        .duo-button-secondary:active {
+            border-bottom-width: 1px;
+        }
+
+        /* Option cards with hover effect */
+        .option-card {
+            border: 2px solid var(--duo-border);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .option-card:hover {
+            background: #F7F7F7;
+            border-color: #ADADAD;
+        }
+
+        .option-card.selected {
+            background: #DDF4FF;
+            border: 3px solid var(--duo-blue);
+            border-bottom: 4px solid var(--duo-blue);
+        }
+
+        /* Progress bar */
+        .progress-container {
+            background: var(--duo-gray);
+            height: 16px;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: var(--duo-green);
+            height: 100%;
+            border-radius: 16px;
+            transition: width 0.4s ease;
+        }
+
+        /* Input styles */
+        .duo-input {
+            border: 2px solid var(--duo-border);
+            border-radius: 16px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .duo-input:focus {
+            outline: none;
+            border-color: var(--duo-blue);
+            border-width: 3px;
+        }
+
+        /* Slide & Fade animation */
+        .step-content {
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .step-content.slide-out {
+            animation: slideOut 0.2s ease;
+        }
+
+        @keyframes slideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        /* Success animation */
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        /* Confetti animation */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--duo-green);
+            position: absolute;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--duo-text);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Mobile optimization */
+        @media (max-width: 640px) {
+            .option-card {
+                min-height: 56px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-2xl mx-auto px-5 py-6 md:px-6 md:py-8">
+        <!-- Simplified header with Duolingo-style minimal design -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold mb-2 text-gray-800">
+                英语启蒙需求调研
+            </h1>
+            <p class="text-base md:text-lg font-semibold text-gray-600">
+                帮助宝贝找到最适合的学习方式
+            </p>
+        </div>
+
+        <!-- Duolingo-style progress bar with smooth fill -->
+        <div class="progress-container mb-8">
+            <div id="progressBar" class="progress-bar" style="width: 25%;"></div>
+        </div>
+
+        <!-- Form Container -->
+        <div id="formContainer" class="bg-white rounded-2xl p-5 md:p-8 shadow-lg">
+            
+            <!-- Step 1: Basic Info -->
+            <div id="step1" class="step-content">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
+                    宝贝多大啦？
+                </h2>
+                <div class="grid grid-cols-2 gap-3 mb-8">
+                    <div class="option-card" data-question="age" data-value="0-3岁">
+                        <span class="text-2xl mr-2">🍼</span>
+                        <span class="font-bold text-base">0-3岁</span>
+                    </div>
+                    <div class="option-card" data-question="age" data-value="3-6岁">
+                        <span class="text-2xl mr-2">🧸</span>
+                        <span class="font-bold text-base">3-6岁</span>
+                    </div>
+                    <div class="option-card" data-question="age" data-value="6-9岁">
+                        <span class="text-2xl mr-2">🎒</span>
+                        <span class="font-bold text-base">6-9岁</span>
+                    </div>
+                    <div class="option-card" data-question="age" data-value="9岁以上">
+                        <span class="text-2xl mr-2">📚</span>
+                        <span class="font-bold text-base">9岁以上</span>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
+                    英语基础如何？
+                </h2>
+                <div class="space-y-3 mb-8">
+                    <div class="option-card" data-question="level" data-value="零基础">
+                        <span class="text-2xl mr-3">🌱</span>
+                        <span class="font-bold text-base">零基础（刚开始）</span>
+                    </div>
+                    <div class="option-card" data-question="level" data-value="少量单词">
+                        <span class="text-2xl mr-3">🌿</span>
+                        <span class="font-bold text-base">少量单词（认识一些）</span>
+                    </div>
+                    <div class="option-card" data-question="level" data-value="简单对话">
+                        <span class="text-2xl mr-3">🌳</span>
+                        <span class="font-bold text-base">简单对话（能说几句）</span>
+                    </div>
+                </div>
+
+                <button id="step1Next" class="duo-button w-full py-4 text-white text-lg font-bold disabled:opacity-50" 
+                        style="background: var(--duo-green);" 
+                        onclick="nextStep(2)"
+                        disabled>
+                    继续
+                </button>
+            </div>
+
+            <!-- Step 2: Learning Preferences -->
+            <div id="step2" class="step-content hidden">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
+                    宝贝喜欢哪种方式？
+                </h2>
+                <div class="space-y-3 mb-8">
+                    <div class="option-card" data-question="method" data-value="动画视频">
+                        <span class="text-2xl mr-3">📺</span>
+                        <span class="font-bold text-base">动画视频（看着学）</span>
+                    </div>
+                    <div class="option-card" data-question="method" data-value="音频儿歌">
+                        <span class="text-2xl mr-3">🎵</span>
+                        <span class="font-bold text-base">音频儿歌（听着学）</span>
+                    </div>
+                    <div class="option-card" data-question="method" data-value="互动游戏">
+                        <span class="text-2xl mr-3">🎮</span>
+                        <span class="font-bold text-base">互动游戏（玩着学）</span>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
+                    每天能投入多久？
+                </h2>
+                <div class="grid grid-cols-2 gap-3 mb-8">
+                    <div class="option-card" data-question="time" data-value="15分钟内">
+                        <span class="text-xl mr-2">⚡</span>
+                        <span class="font-bold text-base">15分钟内</span>
+                    </div>
+                    <div class="option-card" data-question="time" data-value="15-30分钟">
+                        <span class="text-xl mr-2">⏱️</span>
+                        <span class="font-bold text-base">15-30分钟</span>
+                    </div>
+                    <div class="option-card" data-question="time" data-value="30-60分钟">
+                        <span class="text-xl mr-2">⏲️</span>
+                        <span class="font-bold text-base">30-60分钟</span>
+                    </div>
+                    <div class="option-card" data-question="time" data-value="1小时以上">
+                        <span class="text-xl mr-2">🕐</span>
+                        <span class="font-bold text-base">1小时以上</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button class="duo-button duo-button-secondary flex-1 py-4 text-white text-lg font-bold" 
+                            style="background: var(--duo-blue);" 
+                            onclick="prevStep(1)">
+                        返回
+                    </button>
+                    <button id="step2Next" class="duo-button flex-1 py-4 text-white text-lg font-bold" 
+                            style="background: var(--duo-green);" 
+                            onclick="nextStep(3)"
+                            disabled>
+                        继续
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Pain Points -->
+            <div id="step3" class="step-content hidden">
+                <h2 class="text-2xl md:text-3xl font-bold mb-4 text-gray-800">
+                    遇到什么困难？
+                </h2>
+                <p class="text-sm text-gray-600 mb-3">选填，帮助我们更了解您的需求</p>
+                <textarea id="difficulty" 
+                          class="duo-input w-full p-4 mb-8 resize-none" 
+                          rows="4" 
+                          placeholder="比如：不知道怎么教、孩子不感兴趣、发音不标准..."></textarea>
+
+                <h2 class="text-2xl md:text-3xl font-bold mb-4 text-gray-800">
+                    期望达到什么效果？
+                </h2>
+                <p class="text-sm text-gray-600 mb-3">选填，让我们提供更精准的建议</p>
+                <textarea id="expectation" 
+                          class="duo-input w-full p-4 mb-8 resize-none" 
+                          rows="4" 
+                          placeholder="比如：能说简单句子、认识常用单词、敢开口说..."></textarea>
+
+                <div class="flex gap-3">
+                    <button class="duo-button duo-button-secondary flex-1 py-4 text-white text-lg font-bold" 
+                            style="background: var(--duo-blue);" 
+                            onclick="prevStep(2)">
+                        返回
+                    </button>
+                    <button class="duo-button flex-1 py-4 text-white text-lg font-bold" 
+                            style="background: var(--duo-green);" 
+                            onclick="nextStep(4)">
+                        继续
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Contact Info -->
+            <div id="step4" class="step-content hidden">
+                <div class="text-center mb-8">
+                    <div class="text-6xl mb-4">🎁</div>
+                    <h2 class="text-2xl md:text-3xl font-bold mb-3 text-gray-800">
+                        最后一步！
+                    </h2>
+                    <div class="bg-green-50 border-2 border-green-200 rounded-2xl p-4 mb-6">
+                        <p class="text-lg font-bold text-gray-800">
+                            专属英语启蒙规划报告
+                        </p>
+                        <p class="text-sm mt-2 text-gray-600">助教老师将在72小时内通过微信推送</p>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-base font-bold mb-2 text-gray-700">
+                        您的称呼
+                    </label>
+                    <input type="text" 
+                           id="parentName" 
+                           class="duo-input w-full p-4 rounded-2xl" 
+                           placeholder="请输入您的称呼（如：李妈妈）">
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-base font-bold mb-2 text-gray-700">
+                        微信号
+                    </label>
+                    <input type="text" 
+                           id="wechatId" 
+                           class="duo-input w-full p-4 rounded-2xl" 
+                           placeholder="请输入您的微信号">
+                </div>
+
+                <div class="flex gap-3">
+                    <button class="duo-button duo-button-secondary flex-1 py-4 text-white text-lg font-bold" 
+                            style="background: var(--duo-blue);" 
+                            onclick="prevStep(3)">
+                        返回
+                    </button>
+                    <button id="submitBtn" class="duo-button flex-1 py-4 text-white text-lg font-bold" 
+                            style="background: var(--duo-green);" 
+                            onclick="submitForm()"
+                            disabled>
+                        提交
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0" onclick="closeModal()"></div>
+        <div class="bounce-in relative bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl">
+            <div class="text-7xl mb-4">🎉</div>
+            <h3 class="text-3xl font-bold mb-4" style="color: var(--duo-green);">
+                提交成功！
+            </h3>
+            <p class="text-lg mb-6 text-gray-700 leading-relaxed">
+                我们会尽快通过微信联系您<br>并发送专属启蒙规划报告！
+            </p>
+            <button class="duo-button w-full py-4 text-white text-lg font-bold" 
+                    style="background: var(--duo-green);" 
+                    onclick="closeModal()">
+                好的
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const formData = {
+            age: '',
+            level: '',
+            method: '',
+            time: '',
+            difficulty: '',
+            expectation: '',
+            parentName: '',
+            wechatId: ''
+        };
+
+        let currentStep = 1;
+
+        // Option card click handler
+        document.addEventListener('click', function(e) {
+            const card = e.target.closest('.option-card');
+            if (card) {
+                const question = card.dataset.question;
+                const value = card.dataset.value;
+                
+                // Deselect other options in the same group
+                document.querySelectorAll(`[data-question="${question}"]`).forEach(c => {
+                    c.classList.remove('selected');
+                });
+                
+                // Select current option
+                card.classList.add('selected');
+                formData[question] = value;
+                
+                // Update button state
+                updateButtonState();
+            }
+        });
+
+        // Input field listeners for step 4
+        document.getElementById('parentName').addEventListener('input', updateButtonState);
+        document.getElementById('wechatId').addEventListener('input', updateButtonState);
+
+        // Update button enabled/disabled state
+        function updateButtonState() {
+            if (currentStep === 1) {
+                const btn = document.getElementById('step1Next');
+                btn.disabled = !(formData.age && formData.level);
+            } else if (currentStep === 2) {
+                const btn = document.getElementById('step2Next');
+                btn.disabled = !(formData.method && formData.time);
+            } else if (currentStep === 4) {
+                const btn = document.getElementById('submitBtn');
+                const name = document.getElementById('parentName').value.trim();
+                const wechat = document.getElementById('wechatId').value.trim();
+                btn.disabled = !(name && wechat);
+            }
+        }
+
+        // Next step
+        function nextStep(step) {
+            // Validate current step
+            if (!validateStep(currentStep)) {
+                return;
+            }
+
+            // Hide all steps
+            document.querySelectorAll('.step-content').forEach(s => s.classList.add('hidden'));
+            
+            // Show target step
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            
+            // Update progress bar
+            updateProgress(step);
+            
+            // Update current step
+            currentStep = step;
+            
+            // Update button state for new step
+            updateButtonState();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Previous step
+        function prevStep(step) {
+            document.querySelectorAll('.step-content').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            updateProgress(step);
+            currentStep = step;
+            updateButtonState();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Update progress bar
+        function updateProgress(step) {
+            const progress = (step / 4) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // Validate step
+        function validateStep(step) {
+            if (step === 1) {
+                if (!formData.age || !formData.level) {
+                    showToast('请完成所有选项');
+                    return false;
+                }
+            } else if (step === 2) {
+                if (!formData.method || !formData.time) {
+                    showToast('请完成所有选项');
+                    return false;
+                }
+            } else if (step === 3) {
+                formData.difficulty = document.getElementById('difficulty').value.trim();
+                formData.expectation = document.getElementById('expectation').value.trim();
+            }
+            return true;
+        }
+
+        // Submit form
+        async function submitForm() {
+            // Collect final inputs
+            formData.parentName = document.getElementById('parentName').value.trim();
+            formData.wechatId = document.getElementById('wechatId').value.trim();
+
+            // Validate
+            if (!formData.parentName || !formData.wechatId) {
+                showToast('请填写您的称呼和微信号');
+                return;
+            }
+
+            // Disable submit button to prevent double submission
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中...';
+
+            try {
+                // Replace this URL with your Make.com webhook URL
+                const webhookUrl = 'https://hook.us2.make.com/9yh4uden6w4s6p9hffn5nsd90b42zyj6';
+                
+                // Send data to Make.com webhook
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...formData,
+                        submittedAt: new Date().toISOString()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('提交失败');
+                }
+
+                // Log form data for debugging
+                console.log('Form submitted:', formData);
+
+                // Show success modal with confetti
+                showSuccessModal();
+                
+            } catch (error) {
+                console.error('Submission error:', error);
+                showToast('提交失败,请稍后重试');
+                
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = '提交';
+            }
+        }
+
+        // Show success modal
+        function showSuccessModal() {
+            document.getElementById('successModal').classList.remove('hidden');
+            createConfetti();
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#58CC02', '#1CB0F6', '#FFD700', '#FF6B6B'];
+            const confettiCount = 50;
+
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(confetti);
+
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 30);
+            }
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 2000);
+        }
+
+        // Initialize
+        updateButtonState();
+    </script>
+</body>
+</html>
