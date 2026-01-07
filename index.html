@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -603,12 +604,26 @@
 
             try {
                 // Step 1: Generate AI planning
-                submitBtn.textContent = 'AI规划生成中...';
                 const aiPlanning = await generateAIPlanning(formData);
                 
-                // Step 2: Write to Airtable
-                submitBtn.textContent = '保存中...';
-                await writeToAirtable(formData, aiPlanning);
+                // Step 2: Send data to Make.com webhook (including AI planning)
+                const webhookUrl = 'https://hook.us2.make.com/9yh4uden6w4s6p9hffn5nsd90b42zyj6';
+                
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...formData,
+                        aiPlanning: aiPlanning,
+                        submittedAt: new Date().toISOString()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('提交失败');
+                }
 
                 // Log form data for debugging
                 console.log('Form submitted:', formData);
@@ -619,61 +634,11 @@
                 
             } catch (error) {
                 console.error('Submission error:', error);
-                showToast('提交失败,请稍后重试: ' + error.message);
+                showToast('提交失败,请稍后重试');
                 
                 // Re-enable submit button
                 submitBtn.disabled = false;
                 submitBtn.textContent = '提交';
-            }
-        }
-
-        // Write data to Airtable
-        async function writeToAirtable(data, aiPlanning) {
-            // Airtable configuration
-            const AIRTABLE_TOKEN = 'patik7Z2Ff2Lvuqn3.a3ba958bf5c1d6abdc4eb511e5b4f469a6bba63710caeee801a1cb958dee156e'; // 请替换为您的 Personal Access Token
-            const BASE_ID = 'appCEEFvc6LlT4RTJ';
-            const TABLE_NAME = 'tblBtSNSuJ8tTvUWC'; // 或使用表格名称,如 '英语启蒙调研'
-            
-            const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
-            
-            // Prepare record data - 字段名要与 Airtable 中的字段名完全一致
-            const recordData = {
-                fields: {
-                    '孩子年龄': data.age,
-                    '英语基础': data.level,
-                    '学习方式偏好': data.method,
-                    '每周学习频率': data.time,
-                    '家长担心的问题': data.difficulty || '',
-                    '家长期望': data.expectation || '',
-                    '家长称呼': data.parentName,
-                    '微信号': data.wechatId,
-                    'AI规划草稿': aiPlanning,
-                    '提交时间': new Date().toISOString()
-                }
-            };
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${AIRTABLE_TOKEN}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(recordData)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || '写入Airtable失败');
-                }
-
-                const result = await response.json();
-                console.log('Airtable record created:', result);
-                return result;
-                
-            } catch (error) {
-                console.error('Airtable write error:', error);
-                throw error;
             }
         }
 
