@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -600,41 +599,53 @@
             // Disable submit button to prevent double submission
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.textContent = '生成中...';
+            submitBtn.textContent = 'AI规划生成中...';
 
             try {
                 // Step 1: Generate AI planning
                 const aiPlanning = await generateAIPlanning(formData);
+                console.log('AI Planning generated:', aiPlanning);
                 
                 // Step 2: Send data to Make.com webhook (including AI planning)
+                submitBtn.textContent = '提交中...';
                 const webhookUrl = 'https://hook.us2.make.com/9yh4uden6w4s6p9hffn5nsd90b42zyj6';
+                
+                const dataToSend = {
+                    age: formData.age,
+                    level: formData.level,
+                    method: formData.method,
+                    time: formData.time,
+                    difficulty: formData.difficulty || '',
+                    expectation: formData.expectation || '',
+                    parentName: formData.parentName,
+                    wechatId: formData.wechatId,
+                    aiPlanning: aiPlanning,
+                    submittedAt: new Date().toISOString()
+                };
+                
+                console.log('Sending to Make.com:', dataToSend);
                 
                 const response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        ...formData,
-                        aiPlanning: aiPlanning,
-                        submittedAt: new Date().toISOString()
-                    })
+                    body: JSON.stringify(dataToSend)
                 });
 
                 if (!response.ok) {
                     throw new Error('提交失败');
                 }
 
-                // Log form data for debugging
-                console.log('Form submitted:', formData);
-                console.log('AI Planning:', aiPlanning);
+                const responseData = await response.text();
+                console.log('Make.com response:', responseData);
 
                 // Show success modal with confetti
                 showSuccessModal();
                 
             } catch (error) {
                 console.error('Submission error:', error);
-                showToast('提交失败,请稍后重试');
+                showToast('提交失败,请稍后重试: ' + error.message);
                 
                 // Re-enable submit button
                 submitBtn.disabled = false;
