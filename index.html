@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -599,13 +600,15 @@
             // Disable submit button to prevent double submission
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.textContent = '提交中...';
+            submitBtn.textContent = '生成中...';
 
             try {
-                // Replace this URL with your Make.com webhook URL
+                // Step 1: Generate AI planning
+                const aiPlanning = await generateAIPlanning(formData);
+                
+                // Step 2: Send data to Make.com webhook (including AI planning)
                 const webhookUrl = 'https://hook.us2.make.com/9yh4uden6w4s6p9hffn5nsd90b42zyj6';
                 
-                // Send data to Make.com webhook
                 const response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
@@ -613,6 +616,7 @@
                     },
                     body: JSON.stringify({
                         ...formData,
+                        aiPlanning: aiPlanning,
                         submittedAt: new Date().toISOString()
                     })
                 });
@@ -623,6 +627,7 @@
 
                 // Log form data for debugging
                 console.log('Form submitted:', formData);
+                console.log('AI Planning:', aiPlanning);
 
                 // Show success modal with confetti
                 showSuccessModal();
@@ -634,6 +639,68 @@
                 // Re-enable submit button
                 submitBtn.disabled = false;
                 submitBtn.textContent = '提交';
+            }
+        }
+
+        // Generate AI Planning using OpenAI-compatible API
+        async function generateAIPlanning(data) {
+            const apiKey = 'sk-43PxJHViuAWAoIONqEn8hqYTPiHq4leCkD2ndOMxyUZSrH4N';
+            const apiUrl = 'https://api.gptbest.vip/v1/chat/completions';
+            
+            // Create prompt based on form data
+            const prompt = `作为专业的儿童英语启蒙顾问,请根据以下信息为孩子制定一份详细的英语启蒙规划:
+
+孩子年龄: ${data.age}
+英语基础: ${data.level}
+学习方式偏好: ${data.method}
+每周学习频率: ${data.time}
+家长担心的问题: ${data.difficulty || '无'}
+家长期望: ${data.expectation || '无'}
+
+请生成一份专业、详细、可操作的英语启蒙规划,包括:
+1. 学习目标设定
+2. 阶段性学习计划(3-6个月)
+3. 推荐的学习资源和方法
+4. 家长配合建议
+5. 常见问题解答
+
+请用温暖、专业的语气撰写,让家长感到放心和有信心。`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: '你是一位经验丰富的儿童英语启蒙专家,擅长根据孩子的具体情况制定个性化的学习规划。'
+                            },
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 2000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('AI生成失败');
+                }
+
+                const result = await response.json();
+                return result.choices[0].message.content;
+                
+            } catch (error) {
+                console.error('AI generation error:', error);
+                // Return a fallback message if AI generation fails
+                return '系统正在为您生成个性化规划,我们的专业顾问将很快与您联系并提供详细的启蒙方案。';
             }
         }
 
